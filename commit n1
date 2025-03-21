@@ -1,0 +1,108 @@
+import pygame
+import random
+
+pygame.init()
+
+WIDTH, HEIGHT = 800, 600
+WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("пинг-понг")
+
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+
+FPS = 60
+PADDLE_WIDTH, PADDLE_HEIGHT = 10, 100
+BALL_RADIUS = 10
+PADDLE_SPEED = 5
+BALL_SPEED_X, BALL_SPEED_Y = 3, 3
+
+
+class Paddle:
+    def __init__(self, x, y, width, height):
+        self.rect = pygame.Rect(x, y, width, height)
+    
+    def move(self, up=True):
+        if up:
+            self.rect.y -= PADDLE_SPEED
+        else:
+            self.rect.y += PADDLE_SPEED
+        
+
+        if self.rect.top < 0:
+            self.rect.top = 0
+        if self.rect.bottom > HEIGHT:
+            self.rect.bottom = HEIGHT
+    
+    def draw(self, win):
+        pygame.draw.rect(win, WHITE, self.rect)
+
+class Ball:
+    def __init__(self, x, y, radius):
+        self.rect = pygame.Rect(x - radius, y - radius, radius * 2, radius * 2)
+        self.speed_x = BALL_SPEED_X * random.choice((1, -1))
+        self.speed_y = BALL_SPEED_Y * random.choice((1, -1))
+    
+    def move(self):
+        self.rect.x += self.speed_x
+        self.rect.y += self.speed_y
+        
+        if self.rect.top <= 0 or self.rect.bottom >= HEIGHT:
+            self.speed_y *= -1
+    
+    def draw(self, win):
+        pygame.draw.circle(win, WHITE, self.rect.center, BALL_RADIUS)
+    
+    def reset(self):
+        self.rect.center = (WIDTH // 2, HEIGHT // 2)
+        self.speed_x = BALL_SPEED_X * random.choice((1, -1))
+        self.speed_y = BALL_SPEED_Y * random.choice((1, -1))
+
+def draw(win, paddles, ball):
+    win.fill(BLACK)
+    for paddle in paddles:
+        paddle.draw(win)
+    ball.draw(win)
+    pygame.display.update()
+
+def handle_collision(ball, left_paddle, right_paddle):
+    if ball.rect.colliderect(left_paddle.rect) or ball.rect.colliderect(right_paddle.rect):
+        ball.speed_x *= -1
+    
+    if ball.rect.left <= 0 or ball.rect.right >= WIDTH:
+        ball.reset()
+
+def main():
+    clock = pygame.time.Clock()
+    
+    left_paddle = Paddle(10, HEIGHT // 2 - PADDLE_HEIGHT // 2, PADDLE_WIDTH, PADDLE_HEIGHT)
+    right_paddle = Paddle(WIDTH - 20, HEIGHT // 2 - PADDLE_HEIGHT // 2, PADDLE_WIDTH, PADDLE_HEIGHT)
+    ball = Ball(WIDTH // 2, HEIGHT // 2, BALL_RADIUS)
+    
+    paddles = [left_paddle, right_paddle]
+    
+    run = True
+    while run:
+        clock.tick(FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+        
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_w]:
+            left_paddle.move(up=True)
+        if keys[pygame.K_s]:
+            left_paddle.move(up=False)
+        if keys[pygame.K_UP]:
+            right_paddle.move(up=True)
+        if keys[pygame.K_DOWN]:
+            right_paddle.move(up=False)
+        
+        ball.move()
+        handle_collision(ball, left_paddle, right_paddle)
+        
+        draw(WIN, paddles, ball)
+    
+    pygame.quit()
+
+if __name__ == "__main__":
+    main()
