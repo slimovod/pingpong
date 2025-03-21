@@ -1,1 +1,1 @@
-This game is simple verison of ping pong.
+This game is simple verison of ping pong game.
